@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>World Cup 2026 Draw Simulator</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Teko:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* --- WC 2026 THEME STYLES --- */
+      :root {
+        --wc-dark-blue: #00142c;
+        --wc-mid-blue: #10346a;
+        --wc-teal: #00c389;
+        --wc-light-blue: #4cb5f5;
+        --wc-white: #ffffff;
+      }
+
+      body {
+        font-family: "Montserrat", sans-serif;
+        background: radial-gradient(
+          circle at center,
+          var(--wc-mid-blue) 0%,
+          var(--wc-dark-blue) 100%
+        );
+        color: var(--wc-white);
+        text-align: center;
+        padding: 30px;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: rgba(16, 52, 106, 0.7);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(76, 181, 245, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      #drawButton {
+        font-family: "Teko", sans-serif;
+        background: linear-gradient(
+          135deg,
+          var(--wc-teal),
+          var(--wc-light-blue)
+        );
+        color: var(--wc-dark-blue);
+        border: none;
+        padding: 15px 50px;
+        font-size: 28px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 50px;
+        box-shadow: 0 5px 15px rgba(0, 195, 137, 0.4);
+      }
+
+      #drawButton:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(0, 195, 137, 0.6);
+        background: linear-gradient(
+          135deg,
+          var(--wc-light-blue),
+          var(--wc-teal)
+        );
+      }
+
+      #drawButton:active {
+        transform: translateY(1px);
+      }
+
+      #results {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-top: 20px;
+      }
+
+      .group-card {
+        background: linear-gradient(180deg, #0a2247 0%, #00142c 100%);
+        border-top: 4px solid var(--wc-teal);
+        border-bottom: 2px solid var(--wc-light-blue);
+        border-radius: 12px;
+        text-align: left;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease;
+      }
+
+      .group-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .group-header {
+        background: linear-gradient(
+          90deg,
+          var(--wc-teal),
+          var(--wc-light-blue)
+        );
+        color: var(--wc-dark-blue);
+        padding: 10px 15px;
+        font-family: "Teko", sans-serif;
+        font-size: 26px;
+        text-transform: uppercase;
+        text-align: center;
+        letter-spacing: 1px;
+      }
+
+      .team-list {
+        padding: 15px 25px;
+        list-style: none;
+        margin: 0;
+      }
+
+      .team-list li {
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(76, 181, 245, 0.2);
+        font-size: 1.1em;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+      }
+
+      .team-list li:last-child {
+        border-bottom: none;
+      }
+
+      .team-info {
+        color: var(--wc-white);
+        margin-left: 15px;
+      }
+
+      .flag-img {
+        width: 36px;
+        height: 27px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        vertical-align: middle;
+        object-fit: cover;
+        border-radius: 2px;
+      }
+
+      /* Mobile adjustment */
+      @media (max-width: 768px) {
+        #results {
+          grid-template-columns: 1fr;
+        }
+        #drawButton {
+          width: 100%;
+          clip-path: none;
+          border-radius: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <button id="drawButton" onclick="handleDrawClick()">GENERATE DRAW</button>
+      <div id="results">
+        <p
+          style="
+            color: var(--wc-light-blue);
+            font-size: 1.2em;
+            letter-spacing: 1px;
+          "
+        >
+          Ready for World Cup 2026.<br />Click to start.
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // ---------------- CONFIGURATION ----------------
+      const FLAG_MAP = {
+        Spain: "es",
+        Argentina: "ar",
+        France: "fr",
+        England: "gb-eng",
+        Brazil: "br",
+        Portugal: "pt",
+        Netherlands: "nl",
+        Belgium: "be",
+        Germany: "de",
+        Croatia: "hr",
+        Morocco: "ma",
+        Colombia: "co",
+        "United States": "us",
+        Mexico: "mx",
+        Uruguay: "uy",
+        Switzerland: "ch",
+        Japan: "jp",
+        Senegal: "sn",
+        Iran: "ir",
+        "South Korea": "kr",
+        Ecuador: "ec",
+        Austria: "at",
+        Australia: "au",
+        Canada: "ca",
+        Norway: "no",
+        Panama: "pa",
+        Egypt: "eg",
+        Algeria: "dz",
+        Scotland: "gb-sct",
+        Paraguay: "py",
+        Tunisia: "tn",
+        "Ivory Coast": "ci",
+        Uzbekistan: "uz",
+        Qatar: "qa",
+        "Saudi Arabia": "sa",
+        "South Africa": "za",
+        Jordan: "jo",
+        "Cape Verde": "cv",
+        Ghana: "gh",
+        Curacao: "cw",
+        Haiti: "ht",
+        "New Zealand": "nz",
+        Iraq: "iq",
+        Bolivia: "bo",
+        Suriname: "sr",
+        "DR Congo": "cd",
+        Jamaica: "jm",
+        "New Caledonia": "nc",
+        Italy: "it",
+        Wales: "gb-wls",
+        "Bosnia and Herzegovina": "ba",
+        "Northern Ireland": "gb-nir",
+        Ukraine: "ua",
+        Poland: "pl",
+        Sweden: "se",
+        Albania: "al",
+        Turkey: "tr",
+        Romania: "ro",
+        Slovakia: "sk",
+        Kosovo: "xk",
+        Denmark: "dk",
+        "Czech Republic": "cz",
+        "North Macedonia": "mk",
+        "Republic of Ireland": "ie",
+      };
+
+      // ---------------- UTILS ----------------
+      class Country {
+        constructor(name, continent, power) {
+          this.name = name;
+          this.continent = continent;
+          this.power = power;
+        }
+      }
+
+      function rNumber(max) {
+        return Math.floor(Math.random() * max) + 1;
+      }
+
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      // ---------------- MAIN LOGIC HANDLER ----------------
+      function handleDrawClick() {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML =
+          '<p style="color: var(--wc-teal); font-size: 1.2em;">Generating Draw...</p>';
+
+        setTimeout(() => {
+          let attempts = 0;
+          let success = false;
+          let finalGroups = null;
+
+          while (!success && attempts < 1500) {
+            attempts++;
+            try {
+              finalGroups = executeDraw();
+              success = true;
+            } catch (e) {
+              // Silent retry
+            }
+          }
+
+          if (success) {
+            displayResults(finalGroups);
+            console.log(`Draw succeeded after ${attempts} attempts.`);
+          } else {
+            resultsDiv.innerHTML =
+              '<p style="color: #ff5555;">Could not generate a valid draw (Constraints too strict). Please try again.</p>';
+          }
+        }, 50);
+      }
+
+      // ---------------- THE CORE ALGORITHM ----------------
+      function executeDraw() {
+        // 1. Create ALL Teams from scratch
+        const Spain = new Country("Spain", "Europe", rNumber(128));
+        const Argentina = new Country(
+          "Argentina",
+          "South America",
+          rNumber(126)
+        );
+        const France = new Country("France", "Europe", rNumber(124));
+        const England = new Country("England", "Europe", rNumber(122));
+        const Brazil = new Country("Brazil", "South America", rNumber(120));
+        const Portugal = new Country("Portugal", "Europe", rNumber(118));
+        const Netherlands = new Country("Netherlands", "Europe", rNumber(116));
+        const Belgium = new Country("Belgium", "Europe", rNumber(114));
+        const Germany = new Country("Germany", "Europe", rNumber(112));
+        const Croatia = new Country("Croatia", "Europe", rNumber(110));
+        const Morocco = new Country("Morocco", "Africa", rNumber(108));
+        const Colombia = new Country("Colombia", "South America", rNumber(104));
+        const unitedStates = new Country(
+          "United States",
+          "North America",
+          rNumber(102)
+        );
+        const Mexico = new Country("Mexico", "North America", rNumber(100));
+        const Uruguay = new Country("Uruguay", "South America", rNumber(98));
+        const Switzerland = new Country("Switzerland", "Europe", rNumber(96));
+        const Japan = new Country("Japan", "Asia", rNumber(94));
+        const Senegal = new Country("Senegal", "Africa", rNumber(92));
+        const Iran = new Country("Iran", "Asia", rNumber(90));
+        const SouthKorea = new Country("South Korea", "Asia", rNumber(86));
+        const Ecuador = new Country("Ecuador", "South America", rNumber(84));
+        const Austria = new Country("Austria", "Europe", rNumber(82));
+        const Australia = new Country("Australia", "Oceania", rNumber(78));
+        const Canada = new Country("Canada", "North America", rNumber(76));
+        const Norway = new Country("Norway", "Europe", rNumber(72));
+        const Panama = new Country("Panama", "North America", rNumber(70));
+        const Egypt = new Country("Egypt", "Africa", rNumber(64));
+        const Algeria = new Country("Algeria", "Africa", rNumber(62));
+        const Scotland = new Country("Scotland", "Europe", rNumber(60));
+        const Paraguay = new Country("Paraguay", "South America", rNumber(58));
+        const Tunisia = new Country("Tunisia", "Africa", rNumber(56));
+        const IvoryCoast = new Country("Ivory Coast", "Africa", rNumber(54));
+        const Uzbekistan = new Country("Uzbekistan", "Asia", rNumber(44));
+        const Qatar = new Country("Qatar", "Asia", rNumber(42));
+        const SaudiArabia = new Country("Saudi Arabia", "Asia", rNumber(34));
+        const SouthAfrica = new Country("South Africa", "Africa", rNumber(32));
+        const Jordan = new Country("Jordan", "Asia", rNumber(26));
+        const CapeVerde = new Country("Cape Verde", "Africa", rNumber(24));
+        const Ghana = new Country("Ghana", "Africa", rNumber(16));
+        const Curacao = new Country("Curacao", "North America", rNumber(10));
+        const Haiti = new Country("Haiti", "North America", rNumber(8));
+        const NewZealand = new Country("New Zealand", "Oceania", rNumber(6));
+        const Iraq = new Country("Iraq", "Asia", rNumber(38));
+        const Bolivia = new Country("Bolivia", "South America", rNumber(14));
+        const Suriname = new Country("Suriname", "North America", rNumber(4));
+        const DRCongo = new Country("DR Congo", "Africa", rNumber(40));
+        const Jamaica = new Country("Jamaica", "North America", rNumber(20));
+        const NewCaledonia = new Country(
+          "New Caledonia",
+          "Oceania",
+          rNumber(2)
+        );
+        const Italy = new Country("Italy", "Europe", rNumber(106));
+        const Wales = new Country("Wales", "Europe", rNumber(66));
+        const BosniaAndHerzegovina = new Country(
+          "Bosnia and Herzegovina",
+          "Europe",
+          rNumber(18)
+        );
+        const NorthernIreland = new Country(
+          "Northern Ireland",
+          "Europe",
+          rNumber(22)
+        );
+        const Ukraine = new Country("Ukraine", "Europe", rNumber(74));
+        const Poland = new Country("Poland", "Europe", rNumber(68));
+        const Sweden = new Country("Sweden", "Europe", rNumber(52));
+        const Albania = new Country("Albania", "Europe", rNumber(30));
+        const Turkey = new Country("Turkey", "Europe", rNumber(80));
+        const Romania = new Country("Romania", "Europe", rNumber(46));
+        const Slovakia = new Country("Slovakia", "Europe", rNumber(48));
+        const Kosovo = new Country("Kosovo", "Europe", rNumber(12));
+        const Denmark = new Country("Denmark", "Europe", rNumber(88));
+        const CzechRepublic = new Country(
+          "Czech Republic",
+          "Europe",
+          rNumber(50)
+        );
+        const NorthMacedonia = new Country(
+          "North Macedonia",
+          "Europe",
+          rNumber(28)
+        );
+        const RepublicOfIreland = new Country(
+          "Republic of Ireland",
+          "Europe",
+          rNumber(36)
+        );
+
+        // 2. Playoff Logic
+        const getWinner = (teams) => {
+          teams.sort((a, b) => b.power - a.power);
+          return teams[0];
+        };
+
+        const winnerP1 = getWinner([Iraq, Bolivia, Suriname]);
+        const winnerP2 = getWinner([DRCongo, Jamaica, NewCaledonia]);
+        const winnerU1 = getWinner([
+          Italy,
+          Wales,
+          BosniaAndHerzegovina,
+          NorthernIreland,
+        ]);
+        const winnerU2 = getWinner([Ukraine, Poland, Sweden, Albania]);
+        const winnerU3 = getWinner([Turkey, Romania, Slovakia, Kosovo]);
+        const winnerU4 = getWinner([
+          Denmark,
+          CzechRepublic,
+          NorthMacedonia,
+          RepublicOfIreland,
+        ]);
+
+        // 3. Define Pots
+        const Pots = {
+          1: [
+            Spain,
+            Argentina,
+            France,
+            England,
+            Brazil,
+            Portugal,
+            Netherlands,
+            Belgium,
+            Germany,
+            Mexico,
+            Canada,
+            unitedStates,
+          ],
+          2: [
+            Croatia,
+            Morocco,
+            Colombia,
+            Uruguay,
+            Switzerland,
+            Japan,
+            Senegal,
+            Iran,
+            SouthKorea,
+            Ecuador,
+            Austria,
+            Australia,
+          ],
+          3: [
+            Norway,
+            Panama,
+            Egypt,
+            Algeria,
+            Scotland,
+            Paraguay,
+            Tunisia,
+            IvoryCoast,
+            Uzbekistan,
+            Qatar,
+            SaudiArabia,
+            SouthAfrica,
+          ],
+          4: [
+            Jordan,
+            CapeVerde,
+            Ghana,
+            Curacao,
+            Haiti,
+            NewZealand,
+            winnerP1,
+            winnerP2,
+            winnerU1,
+            winnerU2,
+            winnerU3,
+            winnerU4,
+          ],
+        };
+
+        // 4. Initialize Groups
+        const groups = {
+          A: [],
+          B: [],
+          C: [],
+          D: [],
+          E: [],
+          F: [],
+          G: [],
+          H: [],
+          I: [],
+          J: [],
+          K: [],
+          L: [],
+        };
+        const groupNames = Object.keys(groups);
+
+        // --- PHASE 1: POT 1 ASSIGNMENT ---
+        let pot1 = [...Pots[1]];
+
+        // Helper to move team from pot1 to a group
+        const assignToGroup = (teamName, groupName) => {
+          const index = pot1.findIndex((t) => t.name === teamName);
+          if (index > -1) {
+            groups[groupName].push(pot1[index]);
+            pot1.splice(index, 1);
+          } else {
+            throw new Error(`Team ${teamName} not found in pot1.`);
+          }
+        };
+
+        // ---------------- NEW TOP 4 LOGIC (TIER 1 & 2) ----------------
+
+        const MAIN_SETS = {
+          Set1: ["C", "J", "K", "L"], // دسته اول: C, J, K, L
+          Set2: ["E", "F", "G", "H", "I"], // دسته دوم: E, F, G, H, I
+        };
+
+        const SUB_SETS = {
+          Set1_A: ["C", "L"], // زیردسته C/L
+          Set1_B: ["J", "K"], // زیردسته J/K
+          Set2_A: ["E", "F", "I"], // زیردسته E/F/I
+          Set2_B: ["G", "H"], // زیردسته G/H
+        };
+
+        // 1. Fixed Hosts
+        assignToGroup("Mexico", "A");
+        assignToGroup("Canada", "B");
+        assignToGroup("United States", "D");
+
+        let GroupAssignments = {};
+
+        // --- TIER 1: Splitting Teams into MAIN_SETS ---
+
+        // Pair 1 (Spain/Argentina)
+        let P1_S1, P1_S2;
+        if (Math.random() < 0.5) {
+          P1_S1 = Spain;
+          P1_S2 = Argentina;
+        } else {
+          P1_S1 = Argentina;
+          P1_S2 = Spain;
+        } // Randomly assign one to Set1, one to Set2
+
+        // Pair 2 (England/France)
+        let P2_S1, P2_S2;
+        if (Math.random() < 0.5) {
+          P2_S1 = England;
+          P2_S2 = France;
+        } else {
+          P2_S1 = France;
+          P2_S2 = England;
+        } // Randomly assign one to Set1, one to Set2
+
+        // Teams now designated for each Major Set (shuffle the order for TIER 2 assignment):
+        const TeamsInSet1 = shuffle([P1_S1, P2_S1]);
+        const TeamsInSet2 = shuffle([P1_S2, P2_S2]);
+
+        // --- TIER 2: Assigning Groups within the Sets (Sub-Sets) ---
+
+        // 1. Set 1 Teams: Split between (C/L) and (J/K)
+        // Team 1 gets C or L (Set1_A)
+        GroupAssignments[TeamsInSet1[0].name] = shuffle(SUB_SETS.Set1_A)[0];
+        // Team 2 gets J or K (Set1_B)
+        GroupAssignments[TeamsInSet1[1].name] = shuffle(SUB_SETS.Set1_B)[0];
+
+        // 2. Set 2 Teams: Split between (E/F/I) and (G/H)
+        // Team 1 gets E, F, or I (Set2_A)
+        GroupAssignments[TeamsInSet2[0].name] = shuffle(SUB_SETS.Set2_A)[0];
+        // Team 2 gets G or H (Set2_B)
+        GroupAssignments[TeamsInSet2[1].name] = shuffle(SUB_SETS.Set2_B)[0];
+
+        // Apply all Top 4 assignments
+        for (const teamName in GroupAssignments) {
+          assignToGroup(teamName, GroupAssignments[teamName]);
+        }
+
+        // ---------------- END TOP 4 LOGIC ----------------
+
+        // 3. Fill remaining Pot 1 teams into empty groups
+        shuffle(pot1);
+        const emptyGroups = groupNames.filter((g) => groups[g].length === 0);
+
+        for (let i = 0; i < emptyGroups.length; i++) {
+          groups[emptyGroups[i]].push(pot1[i]);
+        }
+
+        // --- PHASE 2: FILL POTS 2, 3, 4 (Backtracking) ---
+
+        function isValid(groupTeams, newTeam) {
+          const counts = {};
+          for (let t of groupTeams)
+            counts[t.continent] = (counts[t.continent] || 0) + 1;
+          // Geographical constraints: Max 2 European, Max 1 Non-European
+          const limit = newTeam.continent === "Europe" ? 2 : 1;
+          return (counts[newTeam.continent] || 0) < limit;
+        }
+
+        function fillPot(potNumber) {
+          const teams = shuffle([...Pots[potNumber]]);
+          const targetGroups = groupNames.filter(
+            (g) => groups[g].length === potNumber - 1
+          );
+
+          let attempts = 0;
+          let success = false;
+
+          while (!success && attempts < 10000) {
+            attempts++;
+            let tempAssignment = {};
+            let currentTeams = [...teams];
+            let shuffledGroups = shuffle([...targetGroups]);
+            let possible = true;
+
+            for (let gName of shuffledGroups) {
+              const validIdx = currentTeams.findIndex((t) =>
+                isValid(groups[gName], t)
+              );
+              if (validIdx === -1) {
+                possible = false;
+                break;
+              }
+              tempAssignment[gName] = currentTeams[validIdx];
+              currentTeams.splice(validIdx, 1);
+            }
+
+            if (possible) {
+              for (let g in tempAssignment) {
+                groups[g].push(tempAssignment[g]);
+              }
+              success = true;
+            } else {
+              shuffle(teams);
+            }
+          }
+
+          if (!success) throw new Error("Dead end");
+        }
+
+        try {
+          fillPot(2);
+          fillPot(3);
+          fillPot(4);
+        } catch (e) {
+          throw new Error("Constraint Failure");
+        }
+
+        return groups;
+      }
+
+      // ---------------- DISPLAY ----------------
+      function displayResults(finalGroups) {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "";
+
+        let htmlContent = "";
+        Object.keys(finalGroups)
+          .sort()
+          .forEach((gName) => {
+            let teamListHTML = finalGroups[gName]
+              .map((team) => {
+                const flagPath = `flags/${
+                  FLAG_MAP[team.name] || "unknown"
+                }.png`;
+                return `<li>
+                                <img src="${flagPath}" alt="" class="flag-img" onerror="this.style.opacity=0.3">
+                                <span class="team-info">${team.name}</span>
+                            </li>`;
+              })
+              .join("");
+
+            htmlContent += `
+                    <div class="group-card">
+                        <div class="group-header">GROUP ${gName}</div>
+                        <ul class="team-list">
+                            ${teamListHTML}
+                        </ul>
+                    </div>
+                `;
+          });
+
+        resultsDiv.innerHTML = htmlContent;
+      }
+    </script>
+  </body>
+</html>
